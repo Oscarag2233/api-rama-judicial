@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: API Intermedia Rama Judicial Colombia
+  description: Middleware para consultar el estado de procesos judiciales en Colombia formateado para LLMs.
+  version: 1.0.0
+servers:
+  - url: https://tu-app-desplegada.com
+    description: Servidor de Producción (Reemplazar URL al desplegar)
+paths:
+  /api/consultar:
+    get:
+      operationId: getProcesoJudicial
+      summary: Consulta información de un proceso por su número de radicado.
+      description: |
+        Obtiene detalles estructurados de un proceso judicial (Juzgado, Partes, Última Actuación) 
+        usando el código único de radicación de 23 dígitos.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: radicado
+          in: query
+          description: Número de radicación único de 23 dígitos (sin guiones ni espacios).
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{23}$'
+            example: "66001310500520180054300"
+      responses:
+        '200':
+          description: Información del proceso encontrada exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  radicado:
+                    type: string
+                    description: El número de radicado consultado.
+                  juzgado:
+                    type: string
+                    description: Nombre del despacho judicial.
+                  sujetos_procesales:
+                    type: string
+                    description: Demandante vs Demandado.
+                  estado_actual:
+                    type: string
+                    description: Estado del proceso (ACTIVO, TERMINADO, etc.).
+                  ultima_actuacion:
+                    type: object
+                    properties:
+                      fecha:
+                        type: string
+                        format: date
+                      anotacion:
+                        type: string
+                        description: Descripción de la última actuación.
+                      link_documento:
+                        type: string
+                        format: uri
+                        description: URL al documento si está disponible.
+        '400':
+          description: Radicado inválido o faltante.
+        '401':
+          description: No autorizado (API Key inválida).
+        '500':
+          description: Error al conectar con la fuente de datos.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
